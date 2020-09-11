@@ -1,0 +1,88 @@
+<!-- <!DOCTYPE html> -->
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="{{ url_for('static',filename='js/crypto-js.js') }}"></script>
+    <!-- <script src="D:\Code\holywiserCrawl\static\js\crypto-js.js"></script> -->
+    <script src="http://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script> 
+</head>
+<body>
+    <script>
+        function encrypt() {
+            var data
+            var key = getQueryVariable("key")
+            var text = getQueryVariable("text")            
+            var hexkey = CryptoJS.enc.Utf8.parse(key);
+            var hexiv = CryptoJS.enc.Utf8.parse(key.substr(0, 8));
+            var decrypttext = CryptoJS.TripleDES.decrypt({ ciphertext: CryptoJS.enc.Base64.parse(text) }, hexkey, {
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7,
+                iv: hexiv,
+            });
+            data = JSON.parse(decrypttext.toString(CryptoJS.enc.Utf8))
+            console.log(data)
+
+            var htmlBody = decodeURIComponent(escape(window.atob(data['item']['body'])))
+            htmlBody = replaceImg(htmlBody)
+            console.log(htmlBody)
+            // console.log(encodeURIComponent(htmlBody))
+            // console.log(htmlBody)
+
+            // Content
+            newTag = document.createElement("div");
+            newTag.id = "filename";
+            newTag.innerHTML= "<h1>" + data['item']['fname'] + "</h1>" + "<p>" + htmlBody + "</p>";
+            document.body.appendChild(newTag);
+
+            // 保存本地
+            // download("spider.txt", htmlBody);
+            saveContent(htmlBody);
+
+
+        }
+        function replaceImg(str){
+            var txt = str.replace(/<img.*?(?:>|\/>)/gi, "");
+            return txt;
+        }
+
+        function getQueryVariable(variable){
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                    var pair = vars[i].split("=");
+                    if(pair[0] == variable){return pair[1];}
+            }
+            return(false);
+        }
+
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        function saveContent(content){
+            // var content = '123456789';
+            $.ajax({
+                url: 'http://127.0.0.1:8058/getdata',
+                dataType: 'json',
+                type: 'get',
+                data: {content:content},
+                contentType: "application/json; charset=utf-8",
+                cache: false,
+                error       : function(err) { },
+                success     : function(data) {}
+            });
+        }
+
+        // window.onload = encrypt;
+        encrypt();
+        
+    </script>
+</body>
+</html>
